@@ -7,7 +7,7 @@ import jwtHandler from "../modules/jwtHandler";
 
 //* next 있으니까 middleware
 export default async (req: Request, res: Response, next: NextFunction) => {
-    //* autorization: Bearer 값 -> split & reverse -> 값 Bearer -> 0번 가져오면 값(토큰)
+    //* <autorization: Bearer 토큰값> -> split & reverse -> 토큰값 Bearer -> 0번 가져오면 토큰값
     const token = req.headers.authorization?.split(" ").reverse()[0]; //? Bearer ~~ 에서 토큰만 파싱
     if (!token) return res.status(sc.UNAUTHORIZED).send(fail(sc.UNAUTHORIZED, rm.EMPTY_TOKEN));
 
@@ -15,6 +15,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
         const decoded = jwtHandler.verify(token); //? jwtHandler에서 만들어둔 verify로 토큰 검사
 
         //? 토큰 에러 분기 처리
+        //* === : 엄격한 비교(타입까지 같아야 함)
         if (decoded === tokenType.TOKEN_EXPIRED)
             return res.status(sc.UNAUTHORIZED).send(fail(sc.UNAUTHORIZED, rm.EXPIRED_TOKEN));
         if (decoded === tokenType.TOKEN_INVALID)

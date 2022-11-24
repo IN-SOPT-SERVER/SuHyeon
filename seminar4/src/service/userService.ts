@@ -73,7 +73,6 @@ const deleteUser = async (userId: number) => {
         id: userId
       },
     });
-    if(!data) console.log("뭐야", data)
     return data;
   }catch(error) {
     console.log(error);

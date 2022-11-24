@@ -100,7 +100,7 @@ const deleteUser = async (req: Request, res: Response) => {
     
     res.status(sc.OK).json({ status: sc.OK, message: rm.DELETE_USER_SUCCESS });
   }catch(error) {
-    if(!error) console.log("error가 null!!!");
+    //* 사용자가 가입하지 않은 userId를 보낸 경우 -> 이렇게 처리하는 게 맞는지?
     res.status(sc.BAD_REQUEST).send(fail(sc.BAD_REQUEST, rm.DELETE_USER_FAIL));
   }
 };

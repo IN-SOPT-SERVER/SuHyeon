@@ -15,6 +15,7 @@ export default {
     READ_USER_SUCCESS: "유저 조회 성공",
     READ_ALL_USERS_SUCCESS: "모든 유저 조회 성공",
     UPDATE_USER_SUCCESS: "유저 수정 성공",
+    UPDATE_USER_FAIL: "유저 수정 실패",
     DELETE_USER_SUCCESS: "유저 탈퇴 성공",
     DELETE_USER_FAIL: "유저 탈퇴 실패",
     NO_USER: "탈퇴했거나 가입하지 않은 유저입니다.",

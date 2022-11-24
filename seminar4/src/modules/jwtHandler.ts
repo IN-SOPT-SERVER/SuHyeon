@@ -8,7 +8,7 @@ const sign = (userId: number) => {
         userId,
     };
 
-    //* sign(payload, secterkey, 유효기간(보안 목적)-2시간(option)) - accessToken 발행
+    //* sign(payload(클라이언트 정보), secretkey, 유효기간(보안 목적)-2시간(option)) - accessToken 발행
     const accessToken = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: "2h" });
     return accessToken;
 };
