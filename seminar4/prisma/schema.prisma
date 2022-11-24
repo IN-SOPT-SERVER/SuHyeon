@@ -8,8 +8,30 @@ datasource db {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  userName String
+  userId         Int     @id @default(autoincrement())
+  userName       String  @db.VarChar(30)
+  profileImage   String?
+  payMoney       Int
+  cash           Int
+  reviewCount    Int
+  likeCount      Int
+  recentSeeCount Int
+}
+
+model Product {
+  productId       Int    @id @unique
+  productName     String @db.VarChar(100)
+  productImage    String
+  discount        Int
+  originalPrice   Int
+  discountedPrice Int
+  reviewCount     Int
+}
+
+model User_Seminar {
+  id       Int    @id(map: "user_seminar_pk") @unique(map: "user_seminar_id_uindex") @default(autoincrement())
+  userName String @db.VarChar(100)
   age      Int?
-  email    String? @db.VarChar(400)
+  email    String @db.VarChar(400)
+  password String @db.VarChar(400)
 }
