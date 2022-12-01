@@ -1,31 +1,63 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import { sc } from "../constants";
+import { UserSignInDTO } from "../interfaces/user/UserSignInDTO";
+import { UserCreateDTO } from "../interfaces/user/UserCreateDTO";
 const prisma = new PrismaClient();
 
 //* 유저 생성
-const createUser = async (name: string, email: string, age: number) => {
-  //* prisma promise 객체 리턴
-  //* user -> user 모델(테이블)
-  //* 테이블 필드명과 변수명 같아야 함 -> 순서는 고려하지 않아도 됨
-  const data = await prisma.user.create({
+const createUser = async (userCreateDto: UserCreateDTO) => {
+  //? 넘겨받은 password를 bcrypt의 도움을 받아 암호화
+  const salt = await bcrypt.genSalt(10); //^ 매우 작은 임의의 랜덤 텍스트 salt
+  const password = await bcrypt.hash(userCreateDto.password, salt); //^ 위에서 랜덤을 생성한 salt를 이용해 암호화
+
+  const data = await prisma.user_Seminar.create({
     data: {
-      userName: name,
-      age,
-      email,
+      userName: userCreateDto?.name,
+      age: userCreateDto?.age,
+      email: userCreateDto.email,
+      password,
     },
   });
 
   return data;
 };
 
-//* 유저 전체 조회
-const getAllUser = async () => {
-  const data = await prisma.user.findMany();
+//* 로그인
+const signIn = async (userSignInDto: UserSignInDTO) => {
+  try {
+    const user = await prisma.user_Seminar.findFirst({
+      where: {
+        email: userSignInDto.email,
+      },
+    });
+    if (!user) return null;
+
+    //? bcrypt가 DB에 저장된 기존 password와 넘겨 받은 password를 대조하고,
+    //? match false시 401을 리턴
+    const isMatch = await bcrypt.compare(userSignInDto.password, user.password);
+    if (!isMatch) return sc.UNAUTHORIZED;
+
+    return user.id;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+//* 유저 전체 조회 - 페이지네이션
+const getAllUser = async (page: number, limit: number) => {
+  const data = await prisma.user_Seminar.findMany({
+    skip: (page - 1) * limit,
+    take: limit,
+  });
+
   return data;
 };
 
 //* 유저 정보 업데이트
 const updateUser = async (userId: number, userName: string) => {
-  const data = await prisma.user.update({
+  const data = await prisma.user_Seminar.update({
     where: {
       id: userId
     },
@@ -39,18 +71,24 @@ const updateUser = async (userId: number, userName: string) => {
 
 //* 유저 삭제
 const deleteUser = async (userId: number) => {
-  await prisma.user.delete({
-    where: {
-      id: userId
-    },
-  });
+  try {
+    const data = await prisma.user_Seminar.delete({
+      where: {
+        id: userId
+      },
+    });
+    return data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
 };
 
 //* userId로 유저 조회
 const getUserById = async (userId: number) => {
   //* id -> unique
   //* where -> 조건, filter
-  const user = await prisma.user.findUnique({
+  const user = await prisma.user_Seminar.findUnique({
     where: {
       id: userId,
     },
@@ -59,12 +97,68 @@ const getUserById = async (userId: number) => {
   return user;
 };
 
+//* 이름로 유저 조회 (query)
+const searchUserByName = async (keyword: string, option: string) => {
+  //? 유저 최신순
+  //* orderBy -> 한 필드를 기준으로 정렬
+  if (option === "desc") {
+    //* contains -> keyword 포함
+    const data = await prisma.user_Seminar.findMany({
+      where: {
+        userName: {
+          contains: keyword
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+
+    return data;
+  }
+
+  //? 유저 오래된 순
+  if (option === "asc") {
+    //* contains -> keyword 포함
+    const data = await prisma.user_Seminar.findMany({
+      where: {
+        userName: {
+          contains: keyword
+        },
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    })
+
+    return data;
+  }
+
+  //? 이름 알파벳으로 정렬
+  if (option === "nameDesc") {
+    const data = await prisma.user_Seminar.findMany({
+      where: {
+        userName: {
+          contains: keyword,
+        },
+      },
+      orderBy: {
+        userName: 'desc',
+      },
+    });
+
+    return data;
+  }
+}
+
 const userService = {
   createUser,
   getAllUser,
   updateUser,
   deleteUser,
   getUserById,
+  signIn,
+  searchUserByName,
 };
 
 export default userService;
