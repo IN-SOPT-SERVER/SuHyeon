@@ -1,8 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { sc } from "../constants";
-import { UserSignInDTO } from "../interfaces/common/user/UserSignInDTO";
-import { UserCreateDTO } from "../interfaces/common/UserCreateDTO";
+import { UserSignInDTO } from "../interfaces/user/UserSignInDTO";
+import { UserCreateDTO } from "../interfaces/user/UserCreateDTO";
 const prisma = new PrismaClient();
 
 //* 유저 생성
@@ -45,9 +45,13 @@ const signIn = async (userSignInDto: UserSignInDTO) => {
   }
 };
 
-//* 유저 전체 조회
-const getAllUser = async () => {
-  const data = await prisma.user_Seminar.findMany();
+//* 유저 전체 조회 - 페이지네이션
+const getAllUser = async (page: number, limit: number) => {
+  const data = await prisma.user_Seminar.findMany({
+    skip: (page - 1) * limit,
+    take: limit,
+  });
+
   return data;
 };
 
@@ -74,7 +78,7 @@ const deleteUser = async (userId: number) => {
       },
     });
     return data;
-  }catch(error) {
+  } catch (error) {
     console.log(error);
     throw error;
   }
@@ -93,6 +97,60 @@ const getUserById = async (userId: number) => {
   return user;
 };
 
+//* 이름로 유저 조회 (query)
+const searchUserByName = async (keyword: string, option: string) => {
+  //? 유저 최신순
+  //* orderBy -> 한 필드를 기준으로 정렬
+  if (option === "desc") {
+    //* contains -> keyword 포함
+    const data = await prisma.user_Seminar.findMany({
+      where: {
+        userName: {
+          contains: keyword
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+
+    return data;
+  }
+
+  //? 유저 오래된 순
+  if (option === "asc") {
+    //* contains -> keyword 포함
+    const data = await prisma.user_Seminar.findMany({
+      where: {
+        userName: {
+          contains: keyword
+        },
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    })
+
+    return data;
+  }
+
+  //? 이름 알파벳으로 정렬
+  if (option === "nameDesc") {
+    const data = await prisma.user_Seminar.findMany({
+      where: {
+        userName: {
+          contains: keyword,
+        },
+      },
+      orderBy: {
+        userName: 'desc',
+      },
+    });
+
+    return data;
+  }
+}
+
 const userService = {
   createUser,
   getAllUser,
@@ -100,6 +158,7 @@ const userService = {
   deleteUser,
   getUserById,
   signIn,
+  searchUserByName,
 };
 
 export default userService;

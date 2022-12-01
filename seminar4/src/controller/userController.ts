@@ -2,8 +2,8 @@ import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import { rm, sc } from "../constants";
 import { fail, success } from "../constants/response";
-import { UserSignInDTO } from "../interfaces/common/user/UserSignInDTO";
-import { UserCreateDTO } from "../interfaces/common/UserCreateDTO";
+import { UserSignInDTO } from "../interfaces/user/UserSignInDTO";
+import { UserCreateDTO } from "../interfaces/user/UserCreateDTO";
 import jwtHandler from "../modules/jwtHandler";
 import { userService } from "../service";
 
@@ -69,9 +69,16 @@ const signInUser = async (req: Request, res: Response) => {
   }
 };
 
-//* 유저 전체 조회
+//* 유저 전체 조회 - 페이지네이션
 const getAllUser = async (req: Request, res: Response) => {
-  const data = await userService.getAllUser();
+
+  const { page, limit } = req.query;
+
+  if (!page || Number(page) < 1 || !limit) {
+    return res.status(sc.NOT_FOUND).send(fail(sc.NOT_FOUND, rm.READ_ALL_USERS_FAIL));
+  }
+
+  const data = await userService.getAllUser(Number(page), Number(limit));
 
   return res.status(sc.OK).json({ status: sc.OK, message: rm.READ_ALL_USERS_SUCCESS, data });
 };
@@ -97,9 +104,9 @@ const deleteUser = async (req: Request, res: Response) => {
   if (!userId) return res.status(sc.NOT_FOUND).send(fail(sc.NOT_FOUND, rm.NOT_FOUND));
   try {
     await userService.deleteUser(+userId);
-    
+
     res.status(sc.OK).json({ status: sc.OK, message: rm.DELETE_USER_SUCCESS });
-  }catch(error) {
+  } catch (error) {
     //* 사용자가 가입하지 않은 userId를 보낸 경우 -> 이렇게 처리하는 게 맞는지?
     res.status(sc.BAD_REQUEST).send(fail(sc.BAD_REQUEST, rm.DELETE_USER_FAIL));
   }
@@ -121,6 +128,23 @@ const getUserById = async (req: Request, res: Response) => {
   return res.status(sc.OK).json({ status: sc.OK, message: rm.READ_USER_SUCCESS, data });
 };
 
+//* GET ~/api/user?keyword=세훈
+const searchUserByName = async (req: Request, res: Response) => {
+  const { keyword, option } = req.query;
+
+  if (!keyword || !option) {
+    return res.status(sc.NOT_FOUND).send(fail(sc.NOT_FOUND, rm.SEARCH_USER_FAIL));
+  }
+
+  const data = await userService.searchUserByName(keyword as string, option as string);
+
+  if (!data) {
+    return res.status(sc.BAD_REQUEST).send(fail(sc.BAD_REQUEST, rm.SEARCH_USER_FAIL));
+  }
+
+  return res.status(sc.OK).send(success(sc.OK, rm.SEARCH_USER_SUCCESS, data));
+};
+
 const userController = {
   createUser,
   getAllUser,
@@ -128,6 +152,7 @@ const userController = {
   deleteUser,
   getUserById,
   signInUser,
+  searchUserByName,
 };
 
 export default userController;

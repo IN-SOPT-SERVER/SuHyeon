@@ -7,25 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  userId         Int     @id @default(autoincrement())
-  userName       String  @db.VarChar(30)
-  profileImage   String?
-  payMoney       Int
-  cash           Int
-  reviewCount    Int
-  likeCount      Int
-  recentSeeCount Int
-}
-
-model Product {
-  productId       Int    @id @unique
-  productName     String @db.VarChar(100)
-  productImage    String
-  discount        Int
-  originalPrice   Int
-  discountedPrice Int
-  reviewCount     Int
+model Image {
+  id    Int     @id @unique @default(autoincrement())
+  image String? @db.VarChar(800)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 }
 
 model User_Seminar {
@@ -34,4 +20,6 @@ model User_Seminar {
   age      Int?
   email    String @db.VarChar(400)
   password String @db.VarChar(400)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 }
